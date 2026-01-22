@@ -1,7 +1,3 @@
-"""
-Simple On-Screen Keyboard with manual language selection
-No external dependencies except tkinter (built-in with Python)
-"""
 
 import tkinter as tk
 from tkinter import ttk

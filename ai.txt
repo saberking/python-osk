@@ -1,0 +1,28 @@
+python
+
+from Xlib import X, display, Xutil
+
+d = display.Display()
+screen = d.screen()
+window = screen.root.create_window(10, 10, 400, 100, 1, screen.root_depth)
+
+# 1. Set basic WM_HINTS (Input = 0)
+window.set_wm_hints(
+    flags=Xutil.InputHint,
+    input=0  # Tell WM we don't want focus
+)
+
+# 2. Set Window Type to 'DOCK' (Modern WMs respect this for OSKs)
+window_type = d.intern_atom('_NET_WM_WINDOW_TYPE')
+dock_type = d.intern_atom('_NET_WM_WINDOW_TYPE_DOCK')
+window.change_property(window_type, X.ATOM, 32, [dock_type])
+
+# 3. Ensure WM_PROTOCOLS does NOT have WM_TAKE_FOCUS
+# Most python-xlib windows start with an empty protocol list.
+# Only add WM_DELETE_WINDOW if you want a close event.
+protocols = d.intern_atom('WM_PROTOCOLS')
+delete_window = d.intern_atom('WM_DELETE_WINDOW')
+window.set_wm_protocols([delete_window])
+
+window.map()
+d.flush()

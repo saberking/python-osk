@@ -1,6 +1,11 @@
 
 import tkinter as tk
 from tkinter import ttk
+from pynput.keyboard import Key, Controller
+from Xlib import display, Xatom, Xutil
+import Xlib.protocol.event
+
+keyboard = Controller()
 
 # ─── Layout Definitions ──────────────────────────────────────────────────────
 
@@ -36,9 +41,11 @@ LAYOUTS = {
 
 
 class OnScreenKeyboard:
-    def __init__(self, master, target_entry=None):
-        self.master = master
-        self.target_entry = target_entry
+    #def __init__(self, master, target_entry=None):
+        # self.master = master
+        # self.target_entry = target_entry
+    def __init__(self):
+
         self.window = None
         self.buttons = []
         self.shift_active = False
@@ -49,16 +56,38 @@ class OnScreenKeyboard:
         self._build_keyboard()
 
     def _create_keyboard_window(self):
-        self.window = tk.Toplevel(self.master)
+        self.window = tk.Tk()
+        self.window.geometry("800x500")
+
+        style = ttk.Style()
+        style.configure("TButton", font=("Segoe UI", 12), padding=6)
+        #
+        # self.target_entry = ttk.Entry(self.window, font=("Segoe UI", 16), width=50)
+        # self.target_entry.pack(pady=60)
+        # self.target_entry.focus_set()
+
+        # root.mainloop()
+       # self.window = tk.Toplevel(self.master)
         self.window.title("Virtual Keyboard")
         self.window.resizable(False, False)
         self.window.attributes("-topmost", True)
 
         w = 880
         h = 420
-        x = self.master.winfo_screenwidth() // 2 - w // 2
-        y = self.master.winfo_screenheight() - h - 100
+        x = self.window.winfo_screenwidth() // 2 - w // 2
+        y = self.window.winfo_screenheight() - h - 100
         self.window.geometry(f"{w}x{h}+{x}+{y}")
+
+        self.window.update_idletasks()
+        d = display.Display()
+        # Get the actual XID of the window
+        window_id = int(self.window.wm_frame(), 16)
+        window = d.create_resource_object('window', window_id)
+        window.set_wm_hints(
+            flags=Xutil.InputHint,
+            input=0
+        )
+        d.flush()
 
     def _build_keyboard(self):
         # Clear everything
@@ -133,25 +162,25 @@ class OnScreenKeyboard:
                         break
 
     def _press(self, key_pair):
-        if not self.target_entry or not self.target_entry.winfo_exists():
-            return
+        # if not self.target_entry or not self.target_entry.winfo_exists():
+        #     return
 
-        if "⌫" in key_pair:
-            current = self.target_entry.get()
-            if current:
-                self.target_entry.delete(len(current)-1, tk.END)
-            return
-
-        if "⏎" in key_pair:
-            self.target_entry.insert(tk.END, "\n")
-            return
+        # if "⌫" in key_pair:
+        #     current = self.target_entry.get()
+        #     if current:
+        #         self.target_entry.delete(len(current)-1, tk.END)
+        #     return
+        #
+        # if "⏎" in key_pair:
+        #     self.target_entry.insert(tk.END, "\n")
+        #     return
 
         if "Space" in key_pair:
-            self.target_entry.insert(tk.END, " ")
+            keyboard.type(" ")
             return
 
         char = key_pair[1] if self.shift_active and len(key_pair) >= 2 else key_pair[0]
-        self.target_entry.insert(tk.END, char)
+        keyboard.type(char)
 
     def show(self):
         if self.window:
@@ -162,22 +191,25 @@ class OnScreenKeyboard:
 # ─── Demo ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    root.title("On-Screen Keyboard Demo")
-    root.geometry("800x500")
+    # root = tk.Tk()
+    # root.title("On-Screen Keyboard Demo")
+    # root.geometry("800x500")
 
-    style = ttk.Style()
-    style.configure("TButton", font=("Segoe UI", 12), padding=6)
+    # style = ttk.Style()
+    # style.configure("TButton", font=("Segoe UI", 12), padding=6)
+    #
+    # entry = ttk.Entry(root, font=("Segoe UI", 16), width=50)
+    # entry.pack(pady=60)
+    # # entry.focus_set()
+    #
+    # osk = OnScreenKeyboard(root, target_entry=entry)
 
-    entry = ttk.Entry(root, font=("Segoe UI", 16), width=50)
-    entry.pack(pady=60)
-    entry.focus_set()
+    # def on_focus(event):
+    #     osk.show()
+    #
+    # entry.bind("<FocusIn>", on_focus)
 
-    keyboard = OnScreenKeyboard(root, target_entry=entry)
+    # root.mainloop()
 
-    def on_focus(event):
-        keyboard.show()
-
-    entry.bind("<FocusIn>", on_focus)
-
-    root.mainloop()
+    osk = OnScreenKeyboard()
+    osk.window.mainloop()
